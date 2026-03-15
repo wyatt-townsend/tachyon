@@ -1,8 +1,6 @@
-[package]
-name = "tachyon"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-clap = { version = "4.6.0", features = ["derive"] }
-walkdir = "2.5.0"
+[workspace]
+members = [
+    "tachyon-core",
+    "tachyon-cli",
+]
+resolver = "2"
