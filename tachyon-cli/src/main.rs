@@ -8,7 +8,7 @@ struct Args {
     pattern: String,
 
     /// The directory to search
-    path: String,
+    path: std::path::PathBuf,
 
     /// Enable case-insensitive matching
     #[arg(short, long)]
@@ -18,5 +18,9 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    print!("Searching for '{}' in '{}'", args.pattern, args.path);
+    print!(
+        "Searching for '{}' in '{}'",
+        args.pattern,
+        args.path.display()
+    );
 }
