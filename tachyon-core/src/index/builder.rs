@@ -1,11 +1,11 @@
 use crate::error::TachyonError;
 use crate::index::entry::{EntryKind, FileEntry};
+use bincode;
+use std::fs::File;
+use std::io::{BufReader, BufWriter};
 use std::path::{Path, PathBuf};
 
 /// Recursively walks `root` and returns every file and directory entry found.
-///
-/// Errors on individual subdirectories (e.g. permission denied) are logged
-/// as warnings and skipped — the walk continues rather than aborting.
 pub fn walk_directory(root: &Path) -> Result<Vec<FileEntry>, TachyonError> {
     let mut files: Vec<FileEntry> = Vec::new();
 
@@ -60,5 +60,42 @@ pub fn walk_directory(root: &Path) -> Result<Vec<FileEntry>, TachyonError> {
     }
 
     // Return the collected entries.
+    Ok(files)
+}
+
+/// Builds an index of the directory tree rooted at `root` and writes it to `dest`.
+pub fn build_index(root: &Path, dest: &Path) -> Result<(), TachyonError> {
+    let files = walk_directory(root)?;
+
+    // Create or clear file
+    let index = File::create(dest).map_err(|e| TachyonError::Io {
+        path: dest.to_path_buf(),
+        source: e,
+    })?;
+
+    // Write files to index
+    let mut writer = BufWriter::new(index);
+
+    // Serialize
+    bincode::encode_into_std_write(&files, &mut writer, bincode::config::standard())
+        .map_err(TachyonError::Serialization)?;
+
+    Ok(())
+}
+
+/// Loads an index from `src` and returns the list of file entries.
+pub fn load_index(src: &Path) -> Result<Vec<FileEntry>, TachyonError> {
+    // Attempt to open index file for reading
+    let index = File::open(src).map_err(|e| TachyonError::Io {
+        path: src.to_path_buf(),
+        source: e,
+    })?;
+
+    let mut reader = BufReader::new(index);
+
+    // Deserialize
+    let files = bincode::decode_from_std_read(&mut reader, bincode::config::standard())
+        .map_err(TachyonError::Deserialization)?;
+
     Ok(files)
 }
