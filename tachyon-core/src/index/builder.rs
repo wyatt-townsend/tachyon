@@ -6,7 +6,7 @@ use std::io::{BufReader, BufWriter};
 use std::path::{Path, PathBuf};
 
 /// Recursively walks `root` and returns every file and directory entry found.
-pub fn walk_directory(root: &Path) -> Result<Vec<FileEntry>, TachyonError> {
+pub(crate) fn walk_directory(root: &Path) -> Result<Vec<FileEntry>, TachyonError> {
     let mut files: Vec<FileEntry> = Vec::new();
 
     // Read the directory entries in `root`.

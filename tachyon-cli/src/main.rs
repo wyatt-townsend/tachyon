@@ -1,26 +1,34 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
+use std::path::PathBuf;
+
+mod commands;
 
 /// Simple Windows file searcher written in Rust
 #[derive(Parser)]
 #[command(version, about)]
 struct Args {
-    /// The pattern to search for
-    pattern: String,
-
-    /// The directory to search
-    path: std::path::PathBuf,
-
-    /// Enable case-insensitive matching
-    #[arg(short, long)]
-    ignore_case: bool,
+    #[command(subcommand)]
+    cmd: Commands,
 }
 
-fn main() {
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// Build the drive file index
+    Build {
+        /// Optionally specify the drive to index
+        #[arg(short, long, default_value = "C:\\")]
+        drive: PathBuf,
+    },
+}
+
+fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
-    print!(
-        "Searching for '{}' in '{}'",
-        args.pattern,
-        args.path.display()
-    );
+    match args.cmd {
+        Commands::Build { drive } => {
+            commands::build::run(&drive)?;
+        }
+    }
+
+    Ok(())
 }
