@@ -1,6 +1,5 @@
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
-
 mod commands;
 
 /// Simple Windows file searcher written in Rust
@@ -26,7 +25,7 @@ fn main() -> anyhow::Result<()> {
 
     match args.cmd {
         Commands::Build { drive } => {
-            commands::build::run(&drive)?;
+            commands::build(&drive)?;
         }
     }
 

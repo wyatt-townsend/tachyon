@@ -1,9 +1,9 @@
 use anyhow;
 use dirs;
 use std::path::Path;
-use tachyon_core::index::builder::build_index;
+use tachyon_core::build_index;
 
-pub(crate) fn run(drive: &Path) -> Result<(), anyhow::Error> {
+pub(crate) fn build(drive: &Path) -> Result<(), anyhow::Error> {
     // Find the local data dir
     let local_dir = dirs::data_local_dir()
         .ok_or_else(|| anyhow::anyhow!("Failed to get local app data directory"))?;
