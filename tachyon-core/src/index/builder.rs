@@ -1,13 +1,38 @@
 use crate::error::TachyonError;
 use crate::index::entry::{EntryKind, FileEntry};
-use bincode;
-use std::fs::File;
-use std::io::{BufReader, BufWriter};
+use crate::index::{EntryMap, Index, SCHEMA_VERSION};
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+use std::time;
+
+pub(crate) struct IndexBuilder {
+    root: PathBuf,
+}
+
+impl IndexBuilder {
+    pub fn new(drive: &Path) -> Self {
+        Self {
+            root: drive.to_owned(),
+        }
+    }
+
+    /// Builds an index of the directory tree rooted at `root` and writes it to `dest`.
+    pub fn build(&mut self) -> Result<Index, TachyonError> {
+        let file_map = walk_directory(&self.root)?;
+
+        // Return the collected entries.
+        Ok(Index {
+            entries: file_map,
+            root: self.root.clone(),
+            built_at: time::SystemTime::now(),
+            schema_version: SCHEMA_VERSION,
+        })
+    }
+}
 
 /// Recursively walks `root` and returns every file and directory entry found.
-pub(crate) fn walk_directory(root: &Path) -> Result<Vec<FileEntry>, TachyonError> {
-    let mut files: Vec<FileEntry> = Vec::new();
+fn walk_directory(root: &Path) -> Result<EntryMap, TachyonError> {
+    let mut files: EntryMap = BTreeMap::new();
 
     // Read the directory entries in `root`.
     let read_dir = std::fs::read_dir(root).map_err(|e| TachyonError::Io {
@@ -50,52 +75,15 @@ pub(crate) fn walk_directory(root: &Path) -> Result<Vec<FileEntry>, TachyonError
         // Recurse before pushing so children appear after parent — depth-first.
         if kind == EntryKind::Directory {
             match walk_directory(&path) {
-                Ok(mut children) => files.append(&mut children),
-                Err(e) => eprintln!("Warning: skipping '{}': {e}", path.display()),
+                Ok(children) => files.extend(children),
+                Err(_e) => (),
             }
         }
 
         // Add the entry to the results.
-        files.push(FileEntry { name, path, kind });
+        files.entry(path).or_insert(FileEntry { name, kind });
     }
 
     // Return the collected entries.
-    Ok(files)
-}
-
-/// Builds an index of the directory tree rooted at `root` and writes it to `dest`.
-pub fn build_index(root: &Path, dest: &Path) -> Result<(), TachyonError> {
-    let files = walk_directory(root)?;
-
-    // Create or clear file
-    let index = File::create(dest).map_err(|e| TachyonError::Io {
-        path: dest.to_path_buf(),
-        source: e,
-    })?;
-
-    // Write files to index
-    let mut writer = BufWriter::new(index);
-
-    // Serialize
-    bincode::encode_into_std_write(&files, &mut writer, bincode::config::standard())
-        .map_err(TachyonError::Serialization)?;
-
-    Ok(())
-}
-
-/// Loads an index from `src` and returns the list of file entries.
-pub fn load_index(src: &Path) -> Result<Vec<FileEntry>, TachyonError> {
-    // Attempt to open index file for reading
-    let index = File::open(src).map_err(|e| TachyonError::Io {
-        path: src.to_path_buf(),
-        source: e,
-    })?;
-
-    let mut reader = BufReader::new(index);
-
-    // Deserialize
-    let files = bincode::decode_from_std_read(&mut reader, bincode::config::standard())
-        .map_err(TachyonError::Deserialization)?;
-
     Ok(files)
 }

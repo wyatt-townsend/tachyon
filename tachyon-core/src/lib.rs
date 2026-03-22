@@ -1,7 +1,12 @@
-pub mod error;
-pub mod index;
-pub use index::{EntryKind, FileEntry};
-pub use index::{build_index, load_index};
+use crate::index::Index;
+use crate::{error::TachyonError, index::builder::IndexBuilder};
+use std::path::Path;
 
-#[cfg(test)]
-mod tests;
+pub mod error;
+mod index;
+
+// Build
+pub fn build_index(drive: &Path) -> Result<Index, TachyonError> {
+    let mut builder = IndexBuilder::new(drive);
+    builder.build()
+}

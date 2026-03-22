@@ -1,3 +1,5 @@
+use std::{collections::BTreeMap, path::PathBuf};
+
 use bincode::{Decode, Encode};
 
 /// Represents a file or directory entry in the search results
@@ -11,6 +13,7 @@ pub enum EntryKind {
 #[derive(Encode, Decode, Debug, Clone)]
 pub struct FileEntry {
     pub name: String,
-    pub path: std::path::PathBuf,
     pub kind: EntryKind,
 }
+
+pub type EntryMap = BTreeMap<PathBuf, FileEntry>;

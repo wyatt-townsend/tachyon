@@ -17,4 +17,10 @@ pub enum TachyonError {
 
     #[error("Deserialization error: {0}")]
     Deserialization(#[from] bincode::error::DecodeError),
+
+    #[error("Invalid index file: {0}")]
+    InvalidIndexFile(String),
+
+    #[error("Incompatible schema version: expected {expected}, found {found}")]
+    IncompatibleSchemaVersion { expected: u16, found: u16 },
 }
