@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 bincode = "2.0.1"
+globset = "0.4.18"
 thiserror = "2.0.18"
 
 [dev-dependencies]

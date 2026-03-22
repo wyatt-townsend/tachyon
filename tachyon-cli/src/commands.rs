@@ -3,7 +3,7 @@ use dirs;
 use indicatif::ProgressBar;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use tachyon_core::build_index;
+use tachyon_core::{build_index, index::Index, query::QueryType, query_index};
 
 // Helpers
 fn get_index_path() -> Result<PathBuf, anyhow::Error> {
@@ -13,6 +13,15 @@ fn get_index_path() -> Result<PathBuf, anyhow::Error> {
 
     // Create index file
     Ok(local_dir.join("tachyon").join("index.bin"))
+}
+
+fn get_progress_bar() -> ProgressBar {
+    ProgressBar::new_spinner().with_style(
+        indicatif::ProgressStyle::default_spinner()
+            .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
+            .template("{spinner:.cyan} {msg}")
+            .unwrap(),
+    )
 }
 
 // Main command functions
@@ -36,12 +45,7 @@ pub(crate) fn build(drive: &Path) -> Result<(), anyhow::Error> {
     let index_path = get_index_path()?;
 
     // Create a spinner to show activity
-    let spinner = ProgressBar::new_spinner().with_style(
-        indicatif::ProgressStyle::default_spinner()
-            .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
-            .template("{spinner:.cyan} {msg}")
-            .unwrap(),
-    );
+    let spinner = get_progress_bar();
     spinner.set_message(format!("Indexing {}...", drive.display()));
     spinner.enable_steady_tick(Duration::from_millis(100));
 
@@ -54,5 +58,44 @@ pub(crate) fn build(drive: &Path) -> Result<(), anyhow::Error> {
     index.save(&index_path)?;
 
     println!("✓ Index saved to {}", index_path.display());
+    Ok(())
+}
+
+pub(crate) fn search(
+    pattern: &String,
+    case_insensitive: bool,
+    glob: bool,
+) -> Result<(), anyhow::Error> {
+    let query_type = if glob {
+        QueryType::Glob {
+            pattern: pattern.clone(),
+            case_insensitive,
+        }
+    } else {
+        QueryType::Substring {
+            pattern: pattern.clone(),
+            case_insensitive,
+        }
+    };
+
+    // Create a spinner to show activity
+    let spinner = get_progress_bar();
+    spinner.enable_steady_tick(Duration::from_millis(100));
+
+    // Load index
+    spinner.set_message(format!("Loading index..."));
+    let index = Index::load(&get_index_path()?)?;
+
+    // Query index
+    spinner.set_message(format!("Searching index..."));
+    let results = query_index(&index, query_type)?;
+
+    // Print results
+    for result in &results {
+        println!("{}", result.display());
+    }
+
+    spinner.finish_with_message(format!("✓ Search completed with {} results", results.len()));
+
     Ok(())
 }

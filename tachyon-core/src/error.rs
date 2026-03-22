@@ -23,4 +23,7 @@ pub enum TachyonError {
 
     #[error("Incompatible schema version: expected {expected}, found {found}")]
     IncompatibleSchemaVersion { expected: u16, found: u16 },
+
+    #[error("Query error: {0}")]
+    Query(String),
 }

@@ -18,6 +18,16 @@ enum Commands {
         #[arg(short, long, default_value = "C:\\")]
         drive: PathBuf,
     },
+    Search {
+        /// The substring pattern to search for  
+        pattern: String,
+        /// Perform a case-insensitive search
+        #[arg(short, long)]
+        case_insensitive: bool,
+        /// Use glob pattern to filter results (e.g. *.txt)
+        #[arg(short, long)]
+        glob: bool,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -26,6 +36,13 @@ fn main() -> anyhow::Result<()> {
     match args.cmd {
         Commands::Build { drive } => {
             commands::build(&drive)?;
+        }
+        Commands::Search {
+            pattern,
+            case_insensitive,
+            glob,
+        } => {
+            commands::search(&pattern, case_insensitive, glob)?;
         }
     }
 
