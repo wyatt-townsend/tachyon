@@ -2,13 +2,12 @@
   import { invoke, Channel } from "@tauri-apps/api/core";
 
   type SearchEvent =
-    | { event: "progress"; data: { pathString: string; isDir: boolean } }
+    | { event: "progress"; data: { pathString: string } }
     | { event: "result"; data: { total: number } };
 
-  type PathRow = { path: string; isDir: boolean };
-
-  let rows: PathRow[] = [];
+  let rows: string[] = [];
   let pathRoot = "";
+  let searchPattern = "";
   let totalReported = 0;
   let walking = false;
   let walkError: string | null = null;
@@ -16,10 +15,7 @@
   const onEvent = new Channel<SearchEvent>();
   onEvent.onmessage = (message) => {
     if (message.event === "progress") {
-      rows = [
-        ...rows,
-        { path: message.data.pathString, isDir: message.data.isDir },
-      ];
+      rows = [...rows, message.data.pathString];
     } else {
       totalReported = message.data.total;
     }
@@ -32,7 +28,11 @@
     totalReported = 0;
     walking = true;
     try {
-      await invoke("walk_directory", { root: pathRoot, onEvent });
+      await invoke("walk_directory", {
+        root: pathRoot,
+        pattern: searchPattern,
+        onEvent,
+      });
     } catch (err) {
       walkError = err instanceof Error ? err.message : String(err);
     } finally {
@@ -53,9 +53,17 @@
         bind:value={pathRoot}
         disabled={walking}
       />
-      <button type="submit" disabled={walking || !pathRoot.trim()}>
-        {walking ? "Searching…" : "Search"}
-      </button>
+      <div class="row">
+        <input
+          id="path-root-input"
+          placeholder="Enter a pattern..."
+          bind:value={searchPattern}
+          disabled={walking}
+        />
+        <button type="submit" disabled={walking || !pathRoot.trim()}>
+          {walking ? "Searching…" : "Search"}
+        </button>
+      </div>
     </div>
   </form>
 
@@ -73,9 +81,9 @@
       {/if}
     </div>
     <ul class="path-list">
-      {#each rows as row (row.path)}
-        <li class="path-item" class:dir={row.isDir}>
-          {row.path}
+      {#each rows as row (row)}
+        <li class="path-item">
+          {row}
         </li>
       {:else}
         <li class="path-item empty">No paths yet. Run a search above.</li>
@@ -188,10 +196,6 @@
 
   .path-item:nth-child(even) {
     background: rgba(0, 0, 0, 0.03);
-  }
-
-  .path-item.dir {
-    color: #396cd8;
   }
 
   .path-item.empty {

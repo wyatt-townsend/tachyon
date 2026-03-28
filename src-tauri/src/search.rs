@@ -1,5 +1,5 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-use ignore::WalkBuilder;
+use ignore::{overrides::OverrideBuilder, WalkBuilder};
 use serde::{Deserialize, Serialize};
 use tauri::ipc::Channel;
 
@@ -11,28 +11,37 @@ use tauri::ipc::Channel;
     content = "data"
 )]
 pub enum SearchEvent {
-    Progress { path_string: String, is_dir: bool },
+    Progress { path_string: String },
     Result { total: usize },
 }
 
 #[tauri::command]
-pub async fn walk_directory(root: String, on_event: Channel<SearchEvent>) {
-    let walker = WalkBuilder::new(root).hidden(false).ignore(true).build();
+pub async fn walk_directory(root: String, pattern: String, on_event: Channel<SearchEvent>) {
+    // Setup
+    let overrides = OverrideBuilder::new(&root)
+        .add(&pattern)
+        .unwrap()
+        .build()
+        .unwrap();
+    let walker = WalkBuilder::new(&root).overrides(overrides).build();
     let mut total_entries: usize = 0;
 
+    // Search for files
     for entry in walker {
         if let Ok(e) = entry {
-            on_event
-                .send(SearchEvent::Progress {
-                    path_string: e.path().to_string_lossy().to_string(),
-                    is_dir: e.file_type().unwrap().is_dir(),
-                })
-                .unwrap();
+            if e.file_type().map_or(false, |f| f.is_file()) {
+                on_event
+                    .send(SearchEvent::Progress {
+                        path_string: e.path().to_string_lossy().to_string(),
+                    })
+                    .unwrap();
 
-            total_entries += 1;
+                total_entries += 1;
+            }
         }
     }
 
+    // Send done
     on_event
         .send(SearchEvent::Result {
             total: total_entries,
