@@ -1,6 +1,7 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 use ignore::{overrides::OverrideBuilder, WalkBuilder};
 use serde::{Deserialize, Serialize};
+use sysinfo::Disks;
 use tauri::ipc::Channel;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -47,4 +48,16 @@ pub async fn walk_directory(root: String, pattern: String, on_event: Channel<Sea
             total: total_entries,
         })
         .unwrap()
+}
+
+#[tauri::command]
+pub async fn get_drives() -> Vec<String> {
+    let mut results: Vec<String> = Vec::new();
+    let disks = Disks::new_with_refreshed_list();
+
+    for disk in disks.list() {
+        results.push(disk.mount_point().to_string_lossy().to_string())
+    }
+
+    results
 }

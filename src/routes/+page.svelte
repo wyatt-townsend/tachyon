@@ -1,10 +1,12 @@
 <script lang="ts">
   import { invoke, Channel } from "@tauri-apps/api/core";
+  import { onMount } from "svelte";
 
   type SearchEvent =
     | { event: "progress"; data: { pathString: string } }
     | { event: "result"; data: { total: number } };
 
+  let drives: string[] = [];
   let rows: string[] = [];
   let pathRoot = "";
   let searchPattern = "";
@@ -12,16 +14,20 @@
   let walking = false;
   let walkError: string | null = null;
 
-  const onEvent = new Channel<SearchEvent>();
-  onEvent.onmessage = (message) => {
-    if (message.event === "progress") {
-      rows = [...rows, message.data.pathString];
-    } else {
-      totalReported = message.data.total;
-    }
-  };
+  onMount(async () => {
+    invoke("get_drives").then((message) => (drives = message as string[]));
+  });
 
   async function startWalk(e: SubmitEvent) {
+    const onEvent = new Channel<SearchEvent>();
+    onEvent.onmessage = (message) => {
+      if (message.event === "progress") {
+        rows = [...rows, message.data.pathString];
+      } else {
+        totalReported = message.data.total;
+      }
+    };
+
     e.preventDefault();
     walkError = null;
     rows = [];
@@ -47,12 +53,17 @@
   <form class="search-form" onsubmit={startWalk}>
     <p class="search-label">Search for files</p>
     <div class="row">
-      <input
-        id="path-root-input"
-        placeholder="Enter a path..."
+      <select
+        id="drive-select"
         bind:value={pathRoot}
         disabled={walking}
-      />
+        aria-label="Drive or root"
+      >
+        <option value="">Select a drive…</option>
+        {#each drives as d (d)}
+          <option value={d}>{d}</option>
+        {/each}
+      </select>
       <div class="row">
         <input
           id="path-root-input"
@@ -94,7 +105,7 @@
 
 <style>
   :root {
-    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+    font-family: Avenir, Helvetica, Arial, sans-serif;
     font-size: 16px;
     line-height: 24px;
     font-weight: 400;
@@ -267,10 +278,6 @@
 
     .path-item:nth-child(even) {
       background: rgba(255, 255, 255, 0.04);
-    }
-
-    .path-item.dir {
-      color: #7eb6ff;
     }
 
     .path-item.empty {
