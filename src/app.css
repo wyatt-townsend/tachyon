@@ -4,14 +4,46 @@
     box-sizing: border-box;
 }
 
+:root {
+    --color-bg: #343d46;
+    --color-surface: #3d4752;
+    --color-surface-inset: #2c343c;
+    --color-border: #4a5563;
+    --color-border-focus: #5c7a8a;
+    --color-text: #c0c5ce;
+    --color-text-muted: #65737e;
+    --color-accent: #6b8a99;
+    --color-accent-muted: #4a6270;
+    --color-row-hover: #3a4450;
+    --color-danger: #c17b7b;
+
+    --font-ui: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+    --text-sm: 0.8125rem;
+    --text-xs: 0.75rem;
+
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+
+    --radius-sm: 2px;
+    --transition-fast: 160ms ease;
+    --transition-active: 80ms ease;
+}
+
 html {
     -webkit-text-size-adjust: 100%;
+    color-scheme: dark;
 }
 
 body {
     margin: 0;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    background: var(--color-bg);
+    color: var(--color-text);
 }
 
 img,
@@ -28,4 +60,11 @@ button,
 textarea,
 select {
     font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --transition-fast: 0.01ms;
+        --transition-active: 0.01ms;
+    }
 }

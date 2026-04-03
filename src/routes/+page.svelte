@@ -48,18 +48,61 @@
   }
 </script>
 
-<main class="container">
-  <SearchOptions
-    {drives}
-    bind:selectedDrive
-    bind:searchPattern
-    disableOptions={searching}
-    onSubmit={startWalk}
-  />
-
+<main class="page-workspace">
   {#if walkError}
-    <p role="alert">{walkError}</p>
+    <p class="page-alert" role="alert">{walkError}</p>
   {/if}
 
-  <FileList {files} {searching} />
+  <div class="list-stage">
+    <FileList {files} {searching} />
+  </div>
+
+  <div class="search-dock">
+    <SearchOptions
+      {drives}
+      bind:selectedDrive
+      bind:searchPattern
+      disableOptions={searching}
+      onSubmit={startWalk}
+    />
+  </div>
 </main>
+
+<style>
+  .page-workspace {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-md) var(--space-lg);
+    gap: var(--space-md);
+  }
+
+  .page-alert {
+    flex-shrink: 0;
+    margin: 0;
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-inset);
+    color: var(--color-danger);
+    font-size: var(--text-sm);
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+  }
+
+  .list-stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .search-dock {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    padding-top: var(--space-sm);
+  }
+</style>
