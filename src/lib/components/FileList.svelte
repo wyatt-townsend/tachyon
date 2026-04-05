@@ -1,14 +1,12 @@
 <script lang="ts">
-  let { files, searching } = $props();
+  let { files } = $props();
 </script>
 
 <section class="file-list" aria-label="Discovered paths">
   <div class="file-list-panel">
     <div class="file-list-header">
       <span class="file-list-title">Paths</span>
-      {#if searching}
-        <span class="file-list-meta">…</span>
-      {:else if files.length > 0}
+      {#if files.length > 0}
         <span class="file-list-meta">{files.length} files found</span>
       {/if}
     </div>

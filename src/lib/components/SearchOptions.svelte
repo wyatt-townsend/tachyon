@@ -1,48 +1,22 @@
 <script lang="ts">
   let {
-    drives,
     selectedDrive = $bindable(""),
     searchPattern = $bindable(""),
-    disableOptions,
-    onSubmit,
+    onSearch,
   } = $props();
-
-  // Select the first item by default
-  $effect(() => {
-    if (drives.length === 0) return;
-    if (selectedDrive === "" || !drives.includes(selectedDrive)) {
-      selectedDrive = drives[0];
-    }
-  });
 </script>
 
-<form class="search-form" onsubmit={onSubmit}>
+<form class="search-form" onsubmit={onSearch}>
   <div class="search-field">
     <label class="search-label" for="searchPattern">Search pattern</label>
     <input
       class="search-input"
       type="text"
       id="searchPattern"
-      disabled={disableOptions}
       bind:value={searchPattern}
     />
   </div>
-  <div class="search-field">
-    <label class="search-label" for="searchDrive">Drive</label>
-    <select
-      class="search-select"
-      id="searchDrive"
-      disabled={disableOptions || drives.length <= 1}
-      bind:value={selectedDrive}
-    >
-      {#each drives as drive (drive)}
-        <option value={drive}>{drive}</option>
-      {/each}
-    </select>
-  </div>
-  <button class="search-button" type="submit" disabled={disableOptions}>
-    Search
-  </button>
+  <button class="search-button" type="submit"> Search </button>
 </form>
 
 <style>
@@ -74,43 +48,6 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--color-text-muted);
-  }
-
-  .search-input,
-  .search-select {
-    padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    background: var(--color-surface-inset);
-    color: var(--color-text);
-    min-height: 2rem;
-    transition:
-      border-color var(--transition-fast),
-      box-shadow var(--transition-fast),
-      background var(--transition-fast);
-  }
-
-  .search-input:hover:not(:disabled),
-  .search-select:hover:not(:disabled) {
-    border-color: var(--color-accent-muted);
-  }
-
-  .search-input:focus-visible,
-  .search-select:focus-visible {
-    outline: none;
-    border-color: var(--color-border-focus);
-    box-shadow: 0 0 0 1px var(--color-border-focus);
-  }
-
-  .search-input:disabled,
-  .search-select:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
-
-  .search-select {
-    min-width: 6rem;
-    cursor: pointer;
   }
 
   .search-button {

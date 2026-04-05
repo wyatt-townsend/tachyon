@@ -1,70 +1,43 @@
 <script lang="ts">
-  import { invoke, Channel } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
+  import { invoke } from "@tauri-apps/api/core";
   import FileList from "$lib/components/FileList.svelte";
   import SearchOptions from "$lib/components/SearchOptions.svelte";
 
-  type SearchEvent =
-    | { event: "progress"; data: { pathString: string } }
-    | { event: "result"; data: { total: number } };
-
-  let drives: string[] = $state<string[]>([]);
   let selectedDrive: string = $state<string>("");
   let searchPattern: string = $state<string>("");
   let files: string[] = $state<string[]>([]);
-  let searching = $state<boolean>(false);
-  let walkError: string | null = $state<string | null>(null);
+  let findError: string | null = $state<string | null>(null);
 
-  onMount(async () => {
-    invoke("get_drives").then((message) => (drives = message as string[]));
+  onMount(() => {
+    invoke("build_file_path_list");
   });
 
-  async function startWalk(e: SubmitEvent) {
+  async function fuzzyFind(e: SubmitEvent) {
     e.preventDefault();
-    walkError = null;
     files = [];
-    searching = true;
-
-    const onEvent = new Channel<SearchEvent>();
-    onEvent.onmessage = (message: SearchEvent) => {
-      if (message.event === "progress") {
-        files = [...files, message.data.pathString];
-      } else {
-        searching = false;
-      }
-    };
 
     try {
-      await invoke("walk_directory", {
-        root: selectedDrive,
+      await invoke("fuzzy_filter", {
         pattern: searchPattern,
-        onEvent,
-      });
+      }).then((message) => (files = message as string[]));
     } catch (err) {
-      walkError = err instanceof Error ? err.message : String(err);
-    } finally {
-      searching = false;
+      findError = err instanceof Error ? err.message : String(err);
     }
   }
 </script>
 
 <main class="page-workspace">
-  {#if walkError}
-    <p class="page-alert" role="alert">{walkError}</p>
+  {#if findError}
+    <p class="page-alert" role="alert">{findError}</p>
   {/if}
 
   <div class="list-stage">
-    <FileList {files} {searching} />
+    <FileList {files} />
   </div>
 
   <div class="search-dock">
-    <SearchOptions
-      {drives}
-      bind:selectedDrive
-      bind:searchPattern
-      disableOptions={searching}
-      onSubmit={startWalk}
-    />
+    <SearchOptions bind:selectedDrive bind:searchPattern onSearch={fuzzyFind} />
   </div>
 </main>
 
@@ -87,7 +60,9 @@
     background: var(--color-surface-inset);
     color: var(--color-danger);
     font-size: var(--text-sm);
-    transition: border-color var(--transition-fast), background var(--transition-fast);
+    transition:
+      border-color var(--transition-fast),
+      background var(--transition-fast);
   }
 
   .list-stage {
