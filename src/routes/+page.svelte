@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { invoke } from "@tauri-apps/api/core";
+  import { invoke, Channel } from "@tauri-apps/api/core";
   import FileList from "$lib/components/FileList.svelte";
   import SearchOptions from "$lib/components/SearchOptions.svelte";
 
@@ -8,19 +8,38 @@
   let searchPattern: string = $state<string>("");
   let files: string[] = $state<string[]>([]);
   let findError: string | null = $state<string | null>(null);
+  let filesIndexed: Boolean = $state(false);
+  type SearchEvent = { event: "found"; data: { pathString: string } };
 
   onMount(() => {
-    invoke("build_file_path_list");
+    invoke("build_file_path_list").then((message) => (filesIndexed = true));
   });
 
-  async function fuzzyFind(e: SubmitEvent) {
-    e.preventDefault();
+  function cancelSearch() {
+    invoke("cancel_search");
+  }
+
+  async function runSearch() {
+    // End the previous search
+    await cancelSearch();
     files = [];
 
+    // Event handler
+    const onEvent = new Channel<SearchEvent>();
+    onEvent.onmessage = (message) => {
+      if (message.event === "found") {
+        files = [...files, message.data.pathString];
+      }
+    };
+
+    // Start the search
     try {
       await invoke("fuzzy_filter", {
         pattern: searchPattern,
-      }).then((message) => (files = message as string[]));
+        onEvent,
+      });
+
+      findError = null;
     } catch (err) {
       findError = err instanceof Error ? err.message : String(err);
     }
@@ -32,13 +51,21 @@
     <p class="page-alert" role="alert">{findError}</p>
   {/if}
 
-  <div class="list-stage">
-    <FileList {files} />
-  </div>
+  {#if filesIndexed}
+    <div class="list-stage">
+      <FileList {files} />
+    </div>
 
-  <div class="search-dock">
-    <SearchOptions bind:selectedDrive bind:searchPattern onSearch={fuzzyFind} />
-  </div>
+    <div class="search-dock">
+      <SearchOptions
+        bind:selectedDrive
+        bind:searchPattern
+        onSearch={runSearch}
+      />
+    </div>
+  {:else}
+    <p class="page-alert" role="alert">Indexing Files</p>
+  {/if}
 </main>
 
 <style>
