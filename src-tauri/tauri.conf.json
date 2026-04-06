@@ -15,7 +15,8 @@
         "title": "tachyon",
         "width": 800,
         "height": 450,
-        "resizable": false
+        "resizable": false,
+        "transparent": true
       }
     ],
     "security": {

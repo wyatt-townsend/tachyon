@@ -16,15 +16,8 @@ The app is run with **`npm run tauri dev`** in Tauri-oriented setups. In this re
 
 The maintainer is **learning Rust and Svelte**. When changing or reviewing code, explain Rust and Svelte concepts briefly and prefer small, readable steps over clever abstractions or complex solutions.
 
-## Styling guide (flat / TUI-inspired)
+## Styling
 
-**Direction:** Flat, terminal-adjacent UI (Neovim-like: structured, calm, little chrome). **Base background:** space gray **`#343D46`** (`--color-bg` in `src/app.css`). **Theme:** muted, slightly cyberpunk — cool grays, restrained teal/blue accents; avoid loud gradients or rainbow accents.
+**Fluent on space gray:** Windows 11–inspired polish on base **`#343D46`** (`--color-bg` in [`src/app.css`](src/app.css)) — **Segoe UI** stack, centered column layout, soft elevation, and **acrylic-style** panels (translucent fills + `backdrop-filter`; on desktop, **dark Mica** on Windows / under-window vibrancy on macOS with a transparent Tauri window). Keep motion short and smooth; respect **`prefers-reduced-motion`** in `app.css`.
 
-**Practice (Svelte 5 + Tauri 2):**
-
-- Keep **design tokens** (colors, spacing, typography, radii, motion) in **`src/app.css`** on `:root` as **`var(--...)`**. Components should consume these variables; avoid hard-coded hex in scattered rules.
-- Use **component `<style>`** in `.svelte` files for layout and pieces specific to that component. Reserve **`:global(...)`** for rare exceptions so names stay easy to follow.
-- Keep **selectors and class names simple** (`layout`, `toolbar`, `row`, etc.) so edits are obvious.
-- **Motion:** short, purposeful transitions on hovers, presses, and focus (e.g. 80–160ms, `ease`); respect **`prefers-reduced-motion`** by narrowing or disabling animation (see existing pattern in `app.css`).
-
-When adding UI, extend the existing token set before introducing one-off colors or durations.
+**Practice:** Tokens stay on `:root` as `var(--...)`; use component `<style>` for local layout; simple class names; extend tokens before one-off colors.

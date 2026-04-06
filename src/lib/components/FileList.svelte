@@ -24,11 +24,9 @@
 
 <style>
   .file-list {
-    width: min(92vw, 56rem);
-    height: min(72vh, 16rem);
-    max-width: 100%;
+    width: 100%;
     flex: 1 1 auto;
-    min-height: 12rem;
+    min-height: 0;
     display: flex;
     flex-direction: column;
   }
@@ -38,10 +36,13 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    background: var(--color-surface-inset);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03);
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--color-border) 85%, transparent);
+    border-radius: var(--radius-md);
+    background: var(--surface-acrylic);
+    box-shadow: var(--shadow-subtle);
+    backdrop-filter: var(--acrylic-filter);
+    -webkit-backdrop-filter: var(--acrylic-filter);
   }
 
   .file-list-header {
@@ -51,11 +52,12 @@
     justify-content: space-between;
     gap: var(--space-md);
     padding: var(--space-sm) var(--space-md);
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-surface);
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--color-border) 45%, transparent);
+    background: transparent;
     font-size: var(--text-xs);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font-weight: 600;
+    letter-spacing: 0.01em;
     color: var(--color-text-muted);
   }
 
@@ -65,6 +67,7 @@
   }
 
   .file-list-meta {
+    font-weight: 500;
     color: var(--color-text-muted);
   }
 
@@ -75,12 +78,42 @@
     overflow: auto;
     flex: 1;
     min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(
+        in srgb,
+        var(--color-text-muted) 45%,
+        transparent
+      )
+      transparent;
+  }
+
+  .file-list-ul::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .file-list-ul::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .file-list-ul::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--color-text-muted) 40%, transparent);
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .file-list-ul::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--color-text-muted) 58%, transparent);
+    background-clip: padding-box;
   }
 
   .file-list-li {
     margin: 0;
     padding: var(--space-xs) var(--space-md);
     border-left: 2px solid transparent;
+    border-radius: var(--radius-sm);
+    margin-inline: var(--space-xs);
     font-size: var(--text-sm);
     color: var(--color-text);
     transition:
@@ -90,8 +123,8 @@
   }
 
   .file-list-li:not(.file-list-li-empty):hover {
-    background: var(--color-row-hover);
-    border-left-color: var(--color-accent-muted);
+    background: color-mix(in srgb, var(--color-text) 6%, transparent);
+    border-left-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
   }
 
   .file-list-li-empty {

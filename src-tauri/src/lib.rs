@@ -20,6 +20,14 @@ pub fn run() {
                 cancel_search: Arc::new(AtomicBool::new(false)),
             });
 
+            #[cfg(target_os = "windows")]
+            {
+                use window_vibrancy::apply_mica;
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = apply_mica(&window, Some(true));
+                }
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
