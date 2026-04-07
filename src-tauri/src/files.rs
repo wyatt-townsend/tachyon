@@ -1,6 +1,9 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 use ignore::{WalkBuilder, WalkState};
-use std::sync::{atomic::{AtomicUsize, Ordering}, mpsc, Arc};
+use std::sync::{
+    atomic::{AtomicUsize, Ordering},
+    mpsc, Arc,
+};
 use sysinfo::Disks;
 
 pub fn enumerate_files_with_progress<F>(on_progress: F) -> Vec<String>
@@ -27,7 +30,7 @@ where
                 if e.file_type().map_or(false, |f| f.is_file()) {
                     let _ = tx.send(e.path().to_string_lossy().to_string());
                     let c = count.fetch_add(1, Ordering::Relaxed) + 1;
-                    if c % 5000 == 0 {
+                    if c % 100 == 0 {
                         on_progress(c);
                     }
                 }

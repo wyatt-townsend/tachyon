@@ -1,5 +1,11 @@
 <script lang="ts">
+  import { revealItemInDir } from "@tauri-apps/plugin-opener";
+
   let { files } = $props();
+
+  async function openContainingFolder(path: string) {
+    await revealItemInDir(path);
+  }
 </script>
 
 <section class="file-list" aria-label="Discovered paths">
@@ -12,7 +18,13 @@
     </div>
     <ul class="file-list-ul">
       {#each files as file (file)}
-        <li class="file-list-li">{file}</li>
+        <li class="file-list-li">
+          <button
+            class="file-list-btn"
+            onclick={() => openContainingFolder(file)}
+            title="Open containing folder"
+          >{file}</button>
+        </li>
       {:else}
         <li class="file-list-li file-list-li-empty">
           No paths yet. Run a search from the options below.
@@ -125,6 +137,27 @@
   .file-list-li:not(.file-list-li-empty):hover {
     background: color-mix(in srgb, var(--color-text) 6%, transparent);
     border-left-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+  }
+
+  .file-list-btn {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .file-list-li:not(.file-list-li-empty):active {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    border-left-color: var(--color-accent);
   }
 
   .file-list-li-empty {
