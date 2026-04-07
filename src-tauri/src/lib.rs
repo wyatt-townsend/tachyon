@@ -1,4 +1,4 @@
-use std::sync::{atomic::AtomicBool, Arc, Mutex};
+use std::sync::{atomic::AtomicUsize, Arc, Mutex};
 
 mod state;
 use state::AppState;
@@ -17,7 +17,7 @@ pub fn run() {
         .setup(|app| {
             app.manage(AppState {
                 file_paths: Mutex::new(Vec::new()),
-                cancel_search: Arc::new(AtomicBool::new(false)),
+                search_generation: Arc::new(AtomicUsize::new(0)),
             });
 
             #[cfg(target_os = "windows")]

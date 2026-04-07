@@ -9,10 +9,26 @@
   let files: string[] = $state<string[]>([]);
   let findError: string | null = $state<string | null>(null);
   let filesIndexed: Boolean = $state(false);
+  let indexedCount: number = $state(0);
   type SearchEvent = { event: "found"; data: { pathString: string } };
+  type IndexEvent =
+    | { event: "progress"; data: { count: number } }
+    | { event: "done"; data: { total: number } };
 
-  onMount(() => {
-    invoke("build_file_path_list").then((message) => (filesIndexed = true));
+  let searchId = 0;
+
+  onMount(async () => {
+    const onEvent = new Channel<IndexEvent>();
+    onEvent.onmessage = (message) => {
+      if (message.event === "progress") {
+        indexedCount = message.data.count;
+      } else if (message.event === "done") {
+        indexedCount = message.data.total;
+        filesIndexed = true;
+      }
+    };
+    await invoke("build_file_path_list", { onEvent });
+    filesIndexed = true;
   });
 
   function cancelSearch() {
@@ -23,12 +39,16 @@
     // End the previous search
     await cancelSearch();
     files = [];
+    const myId = ++searchId;
+
+    if (searchPattern.trim().length <= 0) return;
 
     // Event handler
     const onEvent = new Channel<SearchEvent>();
     onEvent.onmessage = (message) => {
+      if (searchId !== myId) return;
       if (message.event === "found") {
-        files = [...files, message.data.pathString];
+        files.push(message.data.pathString);
       }
     };
 
@@ -64,7 +84,13 @@
       />
     </div>
   {:else}
-    <p class="page-alert" role="alert">Indexing Files</p>
+    <div class="indexing-status" role="status">
+      <span class="indexing-spinner"></span>
+      <span class="indexing-label">
+        Indexing files{#if indexedCount > 0}
+          &mdash; {indexedCount.toLocaleString()} found{/if}&hellip;
+      </span>
+    </div>
   {/if}
 </main>
 
@@ -103,6 +129,38 @@
     flex-direction: column;
     align-items: stretch;
     width: 100%;
+  }
+
+  .indexing-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-inset);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
+  .indexing-spinner {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .indexing-label {
+    white-space: nowrap;
   }
 
   .search-dock {
